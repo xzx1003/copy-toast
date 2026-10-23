@@ -1,0 +1,3 @@
+# Locally built macOS application bundle
+/*.app/
+.DS_Store
