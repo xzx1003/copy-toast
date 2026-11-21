@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastChange = NSPasteboard.general.changeCount
     var pendingBaseline: Int?
     var deadline = Date.distantPast
+    var snapshotPath: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -34,7 +35,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.poll() }
         NSLog("CopyToast: accessibility=%@ inputMonitoring=%@", String(trusted), String(CGPreflightListenEventAccess()))
+        if let path = snapshotPath {
+            toast("复制成功，快去粘贴吧")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.writeSnapshot(path) }
+            return
+        }
         toast("复制提示已开启")
+    }
+
+    /// Renders the current panel into a PNG. Used by `--snapshot` to refresh the
+    /// preview image in the README without needing screen-recording permission.
+    func writeSnapshot(_ path: String) {
+        defer { NSApp.terminate(nil) }
+        guard let view = panel?.contentView else { return }
+        // Force the dark vibrant appearance: drawing the hierarchy outside the
+        // window server otherwise resolves .labelColor to black and drops the
+        // HUD look.
+        view.appearance = NSAppearance(named: .vibrantDark)
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        guard let png = rep.representation(using: .png, properties: [:]) else { return }
+        try? png.write(to: URL(fileURLWithPath: path))
     }
 
     func handle(_ event: NSEvent) {
@@ -116,6 +137,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
+let arguments = CommandLine.arguments
+if let index = arguments.firstIndex(of: "--snapshot"), index + 1 < arguments.count {
+    delegate.snapshotPath = arguments[index + 1]
+}
 app.delegate = delegate
 app.setActivationPolicy(.accessory)
 app.run()
