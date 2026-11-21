@@ -10,7 +10,7 @@
 
 ### 方式一：下载现成的（推荐）
 
-1. 打开 [Releases](https://github.com/xzx1003/copy-toast/releases/latest)，下载 `复制提示.zip`
+1. 打开 [Releases](https://github.com/xzx1003/copy-toast/releases/latest)，下载 `CopyToast-1.0.0.zip`
 2. 解压，把 `复制提示.app` 拖进「应用程序」文件夹
 3. 双击打开
 
